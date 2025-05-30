@@ -333,6 +333,7 @@
             </div>
 
             <button class="reset-btn" onclick="resetAll()">Reset All</button>
+            <button class="download-csv-btn" onclick="downloadCSV()">Download Data as CSV</button>
         </div>
     </div>
 
@@ -398,6 +399,43 @@
 
         // Initialize
         updateSummary();
+    function downloadCSV() {
+    const headers = ['Category', 'Amount'];
+    const rows = [];
+    
+    // Add monthly income as a row
+    rows.push(['Total Income', monthlyIncome]);
+    
+    // Add each expense as a row
+    for (const category in expenses) {
+        rows.push([category, expenses[category]]);
+    }
+    
+    // Create CSV string
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('
+');
+
+    // Create a Blob object
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a temporary URL for the Blob
+    const url = URL.createObjectURL(blob);
+    
+    // Create an anchor element and set its attributes
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'monthly_expense_tracker.csv');
+    link.style.display = 'none';
+    
+    // Append the anchor element to the document
+    document.body.appendChild(link);
+    
+    // Programmatically click the anchor element
+    link.click();
+    
+    // Remove the anchor element from the document
+    document.body.removeChild(link);
+}
     </script>
 </body>
 </html>
