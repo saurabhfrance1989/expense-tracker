@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Documentation - Expense Tracker</title>
+    <title>Resources - Expense Tracker</title>
     <link rel="stylesheet" href="style.css">
     <script>
         // Redirect to login if not authenticated
@@ -44,68 +44,96 @@
 <body>
     <div class="navbar">
         <a href="index.html">Home</a>
-        <a href="documentation.html">Documentation</a>
+        <a href="documentation.html">Resources</a>
         <!-- Add other nav links here if needed -->
     </div>
 
     <div class="doc-container">
-        <h1>Application Documentation</h1>
-        <p>Welcome to the Expense Tracker application documentation.</p>
-        
-        <h2>Overview</h2>
-        <p>This application helps you track your monthly income and expenses.</p>
+        <h1>Resources & Getting Started Guide</h1>
+        <p>Welcome to the Expense Tracker resources page. Here you'll find guides and information to help you use the application effectively.</p>
 
-        <h2>Features</h2>
+        <section>
+            <h2>Explore Resources</h2>
+            <ul>
+                <li><a href="documentation.html">Getting Started Guide</a> (You are here)</li>
+                <li><a href="faqs.html">Frequently Asked Questions (FAQs)</a></li>
+                <li><a href="blog.html">Blog</a></li>
+            </ul>
+        </section>
+        
+        <h2>Overview of the Expense Tracker</h2>
+        <p>This application helps you track your monthly income and expenses with a user-friendly dashboard interface. All data is stored locally in your browser, specific to your user account.</p>
+
+        <h2>Key Features</h2>
         <ul>
-            <li>Track Monthly Income</li>
-            <li>Log Various Expense Categories</li>
-            <li>View Summary of Income, Expenses, and Balance</li>
-            <li>Download Expense Data as CSV</li>
-            <li>User Registration and Login</li>
+            <li>User Registration and Login (data is user-specific).</li>
+            <li>Set and Update Monthly Income.</li>
+            <li>Add New Expenses: Record description, amount, category, and date.</li>
+            <li>View Expenses: Displayed in a sortable and filterable table.</li>
+            <li>Edit and Delete individual expense entries.</li>
+            <li>Filter Expenses: By category and by month.</li>
+            <li>Financial Summary: View total income, total expenses, and remaining balance.</li>
+            <li>Download Expense Data: Export your expenses as a CSV file.</li>
+            <li>Reset User Data: Option to clear all your income and expense data.</li>
+            <li>Responsive Design: Works on desktop, tablets, and mobile devices.</li>
         </ul>
 
         <h2>How to Use</h2>
         <section>
             <h3>1. Registration and Login</h3>
-            <p>If you are a new user, please register an account using the "Register here" link on the login page. Once registered, you can log in with your credentials.</p>
+            <p>If you are a new user, navigate to the <a href="login.html">Login Page</a> and click "Register here". Fill in your desired username and password. Once registered, you can log in with your credentials.</p>
         </section>
         
         <section>
-            <h3>2. Tracking Income</h3>
-            <p>On the main page (index.html), enter your total monthly income in the "Monthly Income" section.</p>
+            <h3>2. Setting Your Income</h3>
+            <p>Once logged in, you'll land on the Dashboard. In the "Overview" section, find the "Total Income" card. Enter your monthly income in the input field provided and it will save automatically.</p>
         </section>
 
         <section>
-            <h3>3. Logging Expenses</h3>
-            <p>Enter amounts for each predefined expense category in the "Monthly Expenses" section. The summary will update automatically.</p>
+            <h3>3. Adding Expenses</h3>
+            <p>In the "Add New Expense" section, fill out the form with the expense description, amount, category, and date. Click "Add Expense". The expense will appear in the "Your Expenses" table below.</p>
         </section>
 
         <section>
-            <h3>4. Viewing Summary</h3>
-            <p>The summary cards show your total income, total expenses, and the remaining balance.</p>
+            <h3>4. Managing Expenses</h3>
+            <p>In the "Your Expenses" table:</p>
+            <ul>
+                <li>**View:** Expenses are listed with details. By default, they are sorted by date (newest first).</li>
+                <li>**Edit:** Click the "Edit" button on an expense row. The details will populate the "Add New Expense" form. Make your changes and click "Update Expense".</li>
+                <li>**Delete:** Click the "Delete" button on an expense row. Confirm the deletion when prompted.</li>
+                <li>**Filter:** Use the "Filter by Category" dropdown or the "Filter by Month" input to narrow down your expense list.</li>
+            </ul>
         </section>
 
         <section>
-            <h3>5. Downloading Data</h3>
-            <p>Click the "Download Expenses as CSV" button to save your income and expense data locally.</p>
+            <h3>5. Viewing Summary</h3>
+            <p>The "Overview" section at the top always shows your total income, total expenses, and the remaining balance, updated in real-time.</p>
         </section>
 
         <section>
-            <h3>6. Logging Out</h3>
-            <p>Click the "Logout" button in the header to end your session.</p>
+            <h3>6. Downloading Data</h3>
+            <p>Click the "Download Expenses as CSV" button (found below the expenses list) to save your current expense data as a CSV file.</p>
         </section>
 
-        <h2>Future Enhancements (Placeholder)</h2>
+        <section>
+            <h3>7. Resetting Data</h3>
+            <p>If you wish to clear all your income and expense data for your account, click the "Reset All User Data" button. You will be asked to confirm this action as it cannot be undone.</p>
+        </section>
+
+        <section>
+            <h3>8. Logging Out</h3>
+            <p>Click the "Logout" button in the header of the dashboard to end your session and return to the login page.</p>
+        </section>
+
+        <h2>Future Considerations</h2>
         <ul>
-            <li>User-specific data storage (currently all users see same data if they log in, this is a known issue for development).</li>
-            <li>Ability to add custom expense categories.</li>
-            <li>Editing and deleting individual expense entries.</li>
             <li>Data visualization (charts).</li>
-            <li>More robust backend and database for data storage.</li>
+            <li>More robust backend and database for cloud data storage and synchronization (currently client-side only).</li>
+            <li>Ability to define custom expense categories directly in the UI.</li>
         </ul>
 
         <p style="text-align:center; margin-top:30px;">
-            <a href="index.html" class="btn">Back to App</a>
+            <a href="index.html" class="btn">Go to Dashboard</a>
         </p>
     </div>
     <script>
