@@ -1,0 +1,13 @@
+# Memento files (for AiDE's internal use)
+memento/
+
+# Node modules (if you ever add a build process)
+node_modules/
+
+# IDE specific files
+.vscode/
+.idea/
+
+# OS specific files
+.DS_Store
+Thumbs.db

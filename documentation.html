@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Documentation - Expense Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Redirect to login if not authenticated
+        if (!localStorage.getItem('loggedInUser')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    <style>
+        .navbar {
+            width: 100%;
+            background-color: #333;
+            overflow: hidden;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .navbar a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .doc-container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="documentation.html">Documentation</a>
+        <!-- Add other nav links here if needed -->
+    </div>
+
+    <div class="doc-container">
+        <h1>Application Documentation</h1>
+        <p>Welcome to the Expense Tracker application documentation.</p>
+        
+        <h2>Overview</h2>
+        <p>This application helps you track your monthly income and expenses.</p>
+
+        <h2>Features</h2>
+        <ul>
+            <li>Track Monthly Income</li>
+            <li>Log Various Expense Categories</li>
+            <li>View Summary of Income, Expenses, and Balance</li>
+            <li>Download Expense Data as CSV</li>
+            <li>User Registration and Login</li>
+        </ul>
+
+        <h2>How to Use</h2>
+        <section>
+            <h3>1. Registration and Login</h3>
+            <p>If you are a new user, please register an account using the "Register here" link on the login page. Once registered, you can log in with your credentials.</p>
+        </section>
+        
+        <section>
+            <h3>2. Tracking Income</h3>
+            <p>On the main page (index.html), enter your total monthly income in the "Monthly Income" section.</p>
+        </section>
+
+        <section>
+            <h3>3. Logging Expenses</h3>
+            <p>Enter amounts for each predefined expense category in the "Monthly Expenses" section. The summary will update automatically.</p>
+        </section>
+
+        <section>
+            <h3>4. Viewing Summary</h3>
+            <p>The summary cards show your total income, total expenses, and the remaining balance.</p>
+        </section>
+
+        <section>
+            <h3>5. Downloading Data</h3>
+            <p>Click the "Download Expenses as CSV" button to save your income and expense data locally.</p>
+        </section>
+
+        <section>
+            <h3>6. Logging Out</h3>
+            <p>Click the "Logout" button in the header to end your session.</p>
+        </section>
+
+        <h2>Future Enhancements (Placeholder)</h2>
+        <ul>
+            <li>User-specific data storage (currently all users see same data if they log in, this is a known issue for development).</li>
+            <li>Ability to add custom expense categories.</li>
+            <li>Editing and deleting individual expense entries.</li>
+            <li>Data visualization (charts).</li>
+            <li>More robust backend and database for data storage.</li>
+        </ul>
+
+        <p style="text-align:center; margin-top:30px;">
+            <a href="index.html" class="btn">Back to App</a>
+        </p>
+    </div>
+    <script>
+        // Display username if available in a common header area (optional for this page)
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            // If you have a common header element to display username, you can update it here.
+            // For example: document.getElementById('usernameDisplayInHeader').textContent = loggedInUser;
+            console.log("User logged in:", loggedInUser);
+        }
+    </script>
+</body>
+</html>

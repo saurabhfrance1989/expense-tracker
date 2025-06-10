@@ -3,487 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Expense Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <title>Expense Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Redirect to login if not authenticated
+        if (!localStorage.getItem('loggedInUser')) {
+            window.location.href = 'login.html';
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .income-section {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
-        }
-
-        .income-section h2 {
-            margin-bottom: 15px;
-            font-size: 1.8em;
-            font-weight: 300;
-        }
-
-        .income-input {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .income-input input {
-            flex: 1;
-            padding: 12px 18px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.2em;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            backdrop-filter: blur(5px);
-        }
-
-        .income-input input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .expenses-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .expenses-section h2 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            font-weight: 300;
-        }
-
-        .expense-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .expense-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-            transition: all 0.3s ease;
-        }
-
-        .expense-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-        }
-
-        .expense-label {
-            font-weight: 600;
-            color: #2c3e50;
-            flex: 1;
-        }
-
-        .expense-input {
-            width: 120px;
-            padding: 8px 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            text-align: right;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .expense-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .summary-card {
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            color: white;
-            font-weight: 600;
-            transition: transform 0.3s ease;
-        }
-
-        .summary-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .income-card {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.3);
-        }
-
-        .expense-card {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
-        }
-
-        .balance-card {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.3);
-        }
-
-        .summary-card h3 {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            opacity: 0.9;
-            font-weight: 300;
-        }
-
-        .summary-card .amount {
-            font-size: 2em;
-            font-weight: 700;
-        }
-
-        .reset-btn {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .reset-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .expense-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .income-input {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .expense-item {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .expense-input {
-                width: 100%;
-            }
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Monthly Expense Tracker</h1>
-            <p>Track your income and expenses with ease</p>
-        </div>
-        
-        <div class="content">
-            <div class="income-section">
-                <h2>Monthly Income</h2>
-                <div class="income-input">
-                    <input type="number" id="monthlyIncome" placeholder="Enter your monthly income" step="0.01">
+    <div class="navbar">
+        <a href="index.html">Dashboard</a>
+        <a href="documentation.html">Documentation</a>
+    </div>
+
+    <div class="page-content-wrapper">
+        <div class="container dashboard-container">
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1>Expense Dashboard</h1>
+                    <p>Welcome, <span id="usernameDisplay"></span>!</p>
                 </div>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </header>
+
+            <!-- Summary Section -->
+            <section class="summary-section">
+                <h2>Overview</h2>
+                <div class="summary-cards">
+                    <div class="summary-card income-card">
+                        <h3>Total Income</h3>
+                        <div class="amount" id="totalIncomeDisplay">₹0</div>
+                        <input type="number" id="monthlyIncome" placeholder="Set Monthly Income" step="0.01">
+                    </div>
+                    <div class="summary-card expense-card">
+                        <h3>Total Expenses</h3>
+                        <div class="amount" id="totalExpensesDisplay">₹0</div>
+                    </div>
+                    <div class="summary-card balance-card">
+                        <h3>Remaining Balance</h3>
+                        <div class="amount" id="remainingBalanceDisplay">₹0</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add Expense Form -->
+            <section class="add-expense-section">
+                <h2>Add New Expense</h2>
+                <form id="addExpenseForm" class="expense-form">
+                    <div class="form-group">
+                        <label for="expenseDescription">Description</label>
+                        <input type="text" id="expenseDescription" placeholder="e.g., Coffee" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount</label>
+                        <input type="number" id="expenseAmount" placeholder="e.g., 50" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseCategory">Category</label>
+                        <select id="expenseCategory">
+                            <option value="food">Food</option>
+                            <option value="transport">Transport</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="health">Health</option>
+                            <option value="education">Education</option>
+                            <option value="apparel">Apparel</option>
+                            <option value="household">Household</option>
+                            <option value="personalCare">Personal Care</option>
+                            <option value="gifts">Gifts/Donations</option>
+                            <option value="debt">Debt Payment</option>
+                            <option value="investment">Investment</option>
+                            <option value="rentMortgage">Rent/Mortgage</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseDate">Date</label>
+                        <input type="date" id="expenseDate" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </form>
+            </section>
+
+            <!-- Expenses List Section -->
+            <section class="expenses-list-section">
+                <h2>Your Expenses</h2>
+                <div class="filter-controls">
+                    <label for="categoryFilter">Filter by Category:</label>
+                    <select id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        {/* Options will be populated by JS */}
+                    </select>
+                    <label for="monthFilter">Filter by Month:</label>
+                    <input type="month" id="monthFilter">
+                </div>
+                <div class="table-responsive">
+                    <table id="expensesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            {/* Expenses will be populated here by JavaScript */}
+                        </tbody>
+                    </table>
+                </div>
+                <p id="noExpensesMessage" style="display: none; text-align: center;">No expenses recorded yet.</p>
+            </section>
+            
+            <div class="dashboard-actions">
+                <button class="btn" id="downloadCsvBtn">Download Expenses as CSV</button>
+                <button class="btn btn-danger" id="resetAllBtn">Reset All User Data</button>
             </div>
 
-            <div class="expenses-section">
-                <h2>Monthly Expenses</h2>
-                <div class="expense-grid">
-                    <div class="expense-item">
-                        <span class="expense-label">Home Loan EMI</span>
-                        <input type="number" class="expense-input" data-category="homeLoan" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Credit Card Bill</span>
-                        <input type="number" class="expense-input" data-category="creditCard" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Monthly House Rent</span>
-                        <input type="number" class="expense-input" data-category="houseRent" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">LIC Payment</span>
-                        <input type="number" class="expense-input" data-category="licPayment" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Electricity Bill</span>
-                        <input type="number" class="expense-input" data-category="electricityBill" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Pamount (HL)</span>
-                        <input type="number" class="expense-input" data-category="pamountHL" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Milk Bill</span>
-                        <input type="number" class="expense-input" data-category="milBill" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Household Items</span>
-                        <input type="number" class="expense-input" data-category="householdItems" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Maid Charges</span>
-                        <input type="number" class="expense-input" data-category="maidCharges" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">MF Investment</span>
-                        <input type="number" class="expense-input" data-category="mfInvestment" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Term Insurance SIPs</span>
-                        <input type="number" class="expense-input" data-category="termInsurance" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Car Expenses</span>
-                        <input type="number" class="expense-input" data-category="carExpenses" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Car Cleaning</span>
-                        <input type="number" class="expense-input" data-category="carCleaning" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Medical</span>
-                        <input type="number" class="expense-input" data-category="medical" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Miscellaneous</span>
-                        <input type="number" class="expense-input" data-category="miscellaneous" step="0.01" placeholder="0">
-                    </div>
-                    <div class="expense-item">
-                        <span class="expense-label">Others</span>
-                        <input type="number" class="expense-input" data-category="others" step="0.01" placeholder="0">
-                    </div>
-                </div>
-            </div>
-
-            <div class="summary">
-                <div class="summary-card income-card">
-                    <h3>Total Income</h3>
-                    <div class="amount" id="totalIncome">₹0</div>
-                </div>
-                <div class="summary-card expense-card">
-                    <h3>Total Expenses</h3>
-                    <div class="amount" id="totalExpenses">₹0</div>
-                </div>
-                <div class="summary-card balance-card">
-                    <h3>Remaining Balance</h3>
-                    <div class="amount" id="remainingBalance">₹0</div>
-                </div>
-            </div>
-
-            <button class="reset-btn" onclick="resetAll()">Reset All</button>
-            <button class="download-csv-btn" onclick="downloadCSV()">Download Data as CSV</button>
         </div>
     </div>
-    <div class="login-section" style="margin-bottom: 25px;">
-    <label for="loginId" style="font-weight:600; margin-right:10px;">Login ID:</label>
-    <input type="text" id="loginId" placeholder="Enter your Login ID" style="padding: 10px; border-radius: 8px; border:1px solid #ccc; font-size:1em;">
-    <button onclick="saveLoginId()" style="padding: 10px 18px; border-radius:8px; border:none; background:#667eea; color:white; font-weight:600; margin-left:10px; cursor:pointer;">Save</button>
-     </div>
-    <script>
-        let expenses = {};
-        let monthlyIncome = 0;
 
+    <script>
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            document.getElementById('usernameDisplay').textContent = loggedInUser;
+        } else {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('loggedInUser');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- Data Keys ---
+        const getIncomeKey = (user) => `monthlyIncome_${user}`;
+        const getExpensesArrayKey = (user) => `expensesArray_${user}`; // Changed from object to array
+
+        // --- Global State ---
+        let monthlyIncome = 0;
+        let expenses = []; // Array of expense objects: {id, description, amount, category, date}
+
+        // --- DOM Elements ---
+        const monthlyIncomeInput = document.getElementById('monthlyIncome');
+        const totalIncomeDisplay = document.getElementById('totalIncomeDisplay');
+        const totalExpensesDisplay = document.getElementById('totalExpensesDisplay');
+        const remainingBalanceDisplay = document.getElementById('remainingBalanceDisplay');
+        const addExpenseForm = document.getElementById('addExpenseForm');
+        const expensesTableBody = document.getElementById('expensesTableBody');
+        const noExpensesMessage = document.getElementById('noExpensesMessage');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const expenseCategorySelect = document.getElementById('expenseCategory'); // For populating filter
+
+        // --- Utility Functions ---
         function formatCurrency(amount) {
             return '₹' + amount.toLocaleString('en-IN', {
-                minimumFractionDigits: 0,
+                minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
         }
 
+        function generateId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // --- Data Persistence ---
+        function loadUserData() {
+            if (!loggedInUser) return;
+            const storedIncome = localStorage.getItem(getIncomeKey(loggedInUser));
+            monthlyIncome = parseFloat(storedIncome) || 0;
+
+            const storedExpenses = localStorage.getItem(getExpensesArrayKey(loggedInUser));
+            expenses = storedExpenses ? JSON.parse(storedExpenses) : [];
+            
+            monthlyIncomeInput.value = monthlyIncome > 0 ? monthlyIncome : '';
+        }
+
+        function saveUserData() {
+            if (!loggedInUser) return;
+            localStorage.setItem(getIncomeKey(loggedInUser), monthlyIncome.toString());
+            localStorage.setItem(getExpensesArrayKey(loggedInUser), JSON.stringify(expenses));
+        }
+
+        // --- UI Update Functions ---
         function updateSummary() {
-            const totalExpenses = Object.values(expenses).reduce((sum, val) => sum + val, 0);
+            const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
             const balance = monthlyIncome - totalExpenses;
 
-            document.getElementById('totalIncome').textContent = formatCurrency(monthlyIncome);
-            document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
-            document.getElementById('remainingBalance').textContent = formatCurrency(balance);
+            totalIncomeDisplay.textContent = formatCurrency(monthlyIncome);
+            totalExpensesDisplay.textContent = formatCurrency(totalExpenses);
+            remainingBalanceDisplay.textContent = formatCurrency(balance);
 
-            // Change balance color based on positive/negative
-            const balanceCard = document.querySelector('.balance-card');
+            const balanceCard = remainingBalanceDisplay.closest('.summary-card');
             if (balance < 0) {
-                balanceCard.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                balanceCard.classList.add('negative-balance');
+                balanceCard.classList.remove('positive-balance');
             } else {
-                balanceCard.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
+                balanceCard.classList.add('positive-balance');
+                balanceCard.classList.remove('negative-balance');
             }
+            saveUserData();
         }
+        
+        function populateCategoryFilter() {
+            const uniqueCategories = [...new Set(expenses.map(exp => exp.category))].sort();
+            const formCategories = Array.from(expenseCategorySelect.options).map(opt => opt.value);
+            const allCategories = [...new Set([...uniqueCategories, ...formCategories])].sort();
 
-        // Income input handler
-        document.getElementById('monthlyIncome').addEventListener('input', function() {
-            monthlyIncome = parseFloat(this.value) || 0;
-            updateSummary();
-        });
-
-        // Expense input handlers
-        document.querySelectorAll('.expense-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const category = this.getAttribute('data-category');
-                expenses[category] = parseFloat(this.value) || 0;
-                updateSummary();
+            categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Reset
+            allCategories.forEach(category => {
+                if(category) { // Ensure category is not empty
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                    categoryFilter.appendChild(option);
+                }
             });
+        }
+
+
+        function renderExpenses() {
+            expensesTableBody.innerHTML = ''; // Clear existing rows
+            
+            const selectedCategory = categoryFilter.value;
+            const selectedMonth = monthFilter.value; // YYYY-MM
+
+            const filteredExpenses = expenses.filter(expense => {
+                const categoryMatch = selectedCategory === 'all' || expense.category === selectedCategory;
+                let monthMatch = true;
+                if (selectedMonth && expense.date) {
+                    // expense.date is YYYY-MM-DD, selectedMonth is YYYY-MM
+                    monthMatch = expense.date.startsWith(selectedMonth);
+                }
+                return categoryMatch && monthMatch;
+            });
+
+
+            if (filteredExpenses.length === 0) {
+                noExpensesMessage.style.display = 'block';
+                expensesTable.style.display = 'none';
+            } else {
+                noExpensesMessage.style.display = 'none';
+                expensesTable.style.display = ''; // Show table
+                filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+                
+                filteredExpenses.forEach(expense => {
+                    const row = expensesTableBody.insertRow();
+                    row.setAttribute('data-id', expense.id);
+                    row.insertCell().textContent = new Date(expense.date).toLocaleDateString('en-CA'); // YYYY-MM-DD for consistency
+                    row.insertCell().textContent = expense.description;
+                    row.insertCell().textContent = expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
+                    row.insertCell().textContent = formatCurrency(parseFloat(expense.amount));
+
+                    const actionsCell = row.insertCell();
+                    const editButton = document.createElement('button');
+                    editButton.classList.add('btn', 'btn-sm', 'btn-edit');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => handleEditExpense(expense.id);
+                    actionsCell.appendChild(editButton);
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('btn', 'btn-sm', 'btn-delete');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => handleDeleteExpense(expense.id);
+                    actionsCell.appendChild(deleteButton);
+                });
+            }
+            updateSummary();
+            populateCategoryFilter(); // Update filter options based on current expenses
+        }
+
+        // --- Event Handlers ---
+        monthlyIncomeInput.addEventListener('input', function() {
+            monthlyIncome = parseFloat(this.value) || 0;
+            updateSummary(); // This also saves
         });
 
-        function resetAll() {
-            if (confirm('Are you sure you want to reset all values?')) {
-                // Reset income
-                document.getElementById('monthlyIncome').value = '';
-                monthlyIncome = 0;
-                
-                // Reset all expenses
-                document.querySelectorAll('.expense-input').forEach(input => {
-                    input.value = '';
-                });
-                expenses = {};
-                
-                // Update summary
-                updateSummary();
+        addExpenseForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const description = document.getElementById('expenseDescription').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const category = document.getElementById('expenseCategory').value;
+            const date = document.getElementById('expenseDate').value;
+
+            if (!description || isNaN(amount) || amount <= 0 || !category || !date) {
+                alert('Please fill all fields correctly.');
+                return;
+            }
+            
+            const editingId = addExpenseForm.dataset.editingId;
+            if (editingId) { // Editing existing expense
+                const expenseIndex = expenses.findIndex(exp => exp.id === editingId);
+                if (expenseIndex > -1) {
+                    expenses[expenseIndex] = { ...expenses[expenseIndex], description, amount, category, date };
+                }
+                delete addExpenseForm.dataset.editingId; // Clear editing state
+                addExpenseForm.querySelector('button[type="submit"]').textContent = 'Add Expense';
+            } else { // Adding new expense
+                const newExpense = { id: generateId(), description, amount, category, date };
+                expenses.push(newExpense);
+            }
+
+            addExpenseForm.reset();
+            document.getElementById('expenseDate').valueAsDate = new Date(); // Reset date to today
+            renderExpenses(); // This calls updateSummary which saves
+        });
+
+        function handleEditExpense(id) {
+            const expense = expenses.find(exp => exp.id === id);
+            if (expense) {
+                document.getElementById('expenseDescription').value = expense.description;
+                document.getElementById('expenseAmount').value = expense.amount;
+                document.getElementById('expenseCategory').value = expense.category;
+                document.getElementById('expenseDate').value = expense.date;
+                addExpenseForm.dataset.editingId = id; // Mark that we are editing
+                addExpenseForm.querySelector('button[type="submit"]').textContent = 'Update Expense';
+                document.getElementById('expenseDescription').focus();
             }
         }
-// Load Login ID from localStorage when the page loads
-window.addEventListener('DOMContentLoaded', function() {
-    const savedId = localStorage.getItem('loginId');
-    if (savedId) {
-        document.getElementById('loginId').value = savedId;
-        document.getElementById('loginId').disabled = true;
-    }
-});
 
-// Save Login ID to localStorage and disable editing
-function saveLoginId() {
-    const loginInput = document.getElementById('loginId');
-    const loginId = loginInput.value.trim();
-    if (!loginId) {
-        alert('Please enter a Login ID.');
-        return;
-    }
-    localStorage.setItem('loginId', loginId);
-    loginInput.disabled = true;
-    alert('Login ID saved!');
-}
-
-// Optional: Reset Login ID when resetting all data
-function resetAll() {
-    if (confirm('Are you sure you want to reset all values?')) {
-        // Reset income
-        document.getElementById('monthlyIncome').value = '';
-        monthlyIncome = 0;
+        function handleDeleteExpense(id) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(expense => expense.id !== id);
+                renderExpenses(); // This calls updateSummary which saves
+            }
+        }
         
-        // Reset all expenses
-        document.querySelectorAll('.expense-input').forEach(input => {
-            input.value = '';
+        categoryFilter.addEventListener('change', renderExpenses);
+        monthFilter.addEventListener('input', renderExpenses);
+
+
+        document.getElementById('resetAllBtn').addEventListener('click', function() {
+            if (confirm(`Are you sure you want to reset all income and expenses for ${loggedInUser}? This action cannot be undone.`)) {
+                monthlyIncome = 0;
+                expenses = [];
+                monthlyIncomeInput.value = '';
+                localStorage.removeItem(getIncomeKey(loggedInUser));
+                localStorage.removeItem(getExpensesArrayKey(loggedInUser));
+                renderExpenses(); // This calls updateSummary which saves the empty state
+            }
         });
-        expenses = {};
-        
-        // Reset Login ID
-        localStorage.removeItem('loginId');
-        const loginInput = document.getElementById('loginId');
-        loginInput.value = '';
-        loginInput.disabled = false;
-        
-        // Update summary
-        updateSummary();
-    }
-}
-        // Initialize
-        updateSummary();
-    function downloadCSV() {
-    const headers = ['Category', 'Amount'];
-    const rows = [];
-    
-    // Add monthly income as a row
-    rows.push(['Total Income', monthlyIncome]);
-    
-    // Add each expense as a row
-    for (const category in expenses) {
-        rows.push([category, expenses[category]]);
-    }
-    
-    // Create CSV string
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('
-');
 
-    // Create a Blob object
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // Create a temporary URL for the Blob
-    const url = URL.createObjectURL(blob);
-    
-    // Create an anchor element and set its attributes
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'monthly_expense_tracker.csv');
-    link.style.display = 'none';
-    
-    // Append the anchor element to the document
-    document.body.appendChild(link);
-    
-    // Programmatically click the anchor element
-    link.click();
-    
-    // Remove the anchor element from the document
-    document.body.removeChild(link);
-}
+        document.getElementById('downloadCsvBtn').addEventListener('click', function() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Date,Description,Category,Amount\r\n";
+
+            const dataToExport = expenses.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending for export
+
+            dataToExport.forEach(expense => {
+                csvContent += `${expense.date},"${expense.description.replace(/"/g, '""')}",${expense.category},${expense.amount}\r\n`;
+            });
+            
+            // Add income as a summary line if needed, or handle separately
+            // For now, just expenses.
+            // csvContent += `\r\nMonthly Income,,,${monthlyIncome}\r\n`;
+
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `expenses_${loggedInUser}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // --- Initialization ---
+        function initializeDashboard() {
+            if (!loggedInUser) return;
+            loadUserData();
+            document.getElementById('expenseDate').valueAsDate = new Date(); // Set default date to today
+            renderExpenses(); // Initial render
+        }
+
+        initializeDashboard();
     </script>
 </body>
 </html>
