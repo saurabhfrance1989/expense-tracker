@@ -84,6 +84,11 @@
                         <label for="expenseDate">Date</label>
                         <input type="date" id="expenseDate" required>
                     </div>
+                    <div class="form-group">
+                        <label for="expenseAttachment">Attach Bill/Warranty (Optional, Max 250KB)</label>
+                        <input type="file" id="expenseAttachment" accept="image/jpeg,image/png,application/pdf">
+                        <div id="attachmentFileInfo" style="font-size: 0.8em; margin-top: 5px; color: #555;"></div>
+                    </div>
                     <button type="submit" class="btn btn-primary">Add Expense</button>
                 </form>
             </section>
@@ -108,6 +113,7 @@
                                 <th>Description</th>
                                 <th>Category</th>
                                 <th>Amount</th>
+                                <th>Bill</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -144,11 +150,12 @@
 
         // --- Data Keys ---
         const getIncomeKey = (user) => `monthlyIncome_${user}`;
-        const getExpensesArrayKey = (user) => `expensesArray_${user}`; // Changed from object to array
+        const getExpensesArrayKey = (user) => `expensesArray_${user}`;
 
         // --- Global State ---
         let monthlyIncome = 0;
-        let expenses = []; // Array of expense objects: {id, description, amount, category, date}
+        // Expense object: {id, description, amount, category, date, attachmentDataURI?, attachmentFileName?, attachmentFileType?}
+        let expenses = []; 
 
         // --- DOM Elements ---
         const monthlyIncomeInput = document.getElementById('monthlyIncome');
@@ -160,7 +167,10 @@
         const noExpensesMessage = document.getElementById('noExpensesMessage');
         const categoryFilter = document.getElementById('categoryFilter');
         const monthFilter = document.getElementById('monthFilter');
-        const expenseCategorySelect = document.getElementById('expenseCategory'); // For populating filter
+        const expenseCategorySelect = document.getElementById('expenseCategory');
+        const expenseAttachmentInput = document.getElementById('expenseAttachment');
+        const attachmentFileInfo = document.getElementById('attachmentFileInfo');
+        const MAX_FILE_SIZE = 250 * 1024; // 250KB
 
         // --- Utility Functions ---
         function formatCurrency(amount) {
@@ -219,7 +229,7 @@
 
             categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Reset
             allCategories.forEach(category => {
-                if(category) { // Ensure category is not empty
+                if(category) { 
                     const option = document.createElement('option');
                     option.value = category;
                     option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
@@ -228,39 +238,47 @@
             });
         }
 
-
         function renderExpenses() {
-            expensesTableBody.innerHTML = ''; // Clear existing rows
+            expensesTableBody.innerHTML = ''; 
             
             const selectedCategory = categoryFilter.value;
-            const selectedMonth = monthFilter.value; // YYYY-MM
+            const selectedMonth = monthFilter.value; 
 
             const filteredExpenses = expenses.filter(expense => {
                 const categoryMatch = selectedCategory === 'all' || expense.category === selectedCategory;
                 let monthMatch = true;
                 if (selectedMonth && expense.date) {
-                    // expense.date is YYYY-MM-DD, selectedMonth is YYYY-MM
                     monthMatch = expense.date.startsWith(selectedMonth);
                 }
                 return categoryMatch && monthMatch;
             });
-
 
             if (filteredExpenses.length === 0) {
                 noExpensesMessage.style.display = 'block';
                 expensesTable.style.display = 'none';
             } else {
                 noExpensesMessage.style.display = 'none';
-                expensesTable.style.display = ''; // Show table
-                filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+                expensesTable.style.display = ''; 
+                filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)); 
                 
                 filteredExpenses.forEach(expense => {
                     const row = expensesTableBody.insertRow();
                     row.setAttribute('data-id', expense.id);
-                    row.insertCell().textContent = new Date(expense.date).toLocaleDateString('en-CA'); // YYYY-MM-DD for consistency
+                    row.insertCell().textContent = new Date(expense.date).toLocaleDateString('en-CA');
                     row.insertCell().textContent = expense.description;
                     row.insertCell().textContent = expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
                     row.insertCell().textContent = formatCurrency(parseFloat(expense.amount));
+
+                    const billCell = row.insertCell();
+                    if (expense.attachmentDataURI && expense.attachmentFileName) {
+                        const viewBillButton = document.createElement('button');
+                        viewBillButton.classList.add('btn', 'btn-sm', 'btn-info'); // Using btn-info for view
+                        viewBillButton.textContent = 'View';
+                        viewBillButton.onclick = () => viewAttachment(expense.attachmentDataURI, expense.attachmentFileType, expense.attachmentFileName);
+                        billCell.appendChild(viewBillButton);
+                    } else {
+                        billCell.textContent = '-';
+                    }
 
                     const actionsCell = row.insertCell();
                     const editButton = document.createElement('button');
@@ -277,43 +295,127 @@
                 });
             }
             updateSummary();
-            populateCategoryFilter(); // Update filter options based on current expenses
+            populateCategoryFilter();
         }
+
+        function viewAttachment(dataURI, fileType, fileName) {
+            if (!dataURI) return;
+            // For images, display in a new tab or modal. For PDFs, try to open in new tab.
+            // This is a simplified version; a modal would be nicer for images.
+            const newWindow = window.open();
+            if (fileType && fileType.startsWith('image/')) {
+                newWindow.document.write(`<title>${fileName}</title><img src="${dataURI}" style="max-width:100%; max-height:100vh;" alt="${fileName}">`);
+            } else {
+                 // For PDFs and other types, this might trigger a download or display if browser supports it.
+                newWindow.location.href = dataURI;
+            }
+        }
+
 
         // --- Event Handlers ---
         monthlyIncomeInput.addEventListener('input', function() {
             monthlyIncome = parseFloat(this.value) || 0;
-            updateSummary(); // This also saves
+            updateSummary();
         });
 
-        addExpenseForm.addEventListener('submit', function(event) {
+        addExpenseForm.addEventListener('submit', async function(event) {
             event.preventDefault();
             const description = document.getElementById('expenseDescription').value.trim();
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const category = document.getElementById('expenseCategory').value;
             const date = document.getElementById('expenseDate').value;
+            const attachmentFile = expenseAttachmentInput.files[0];
 
             if (!description || isNaN(amount) || amount <= 0 || !category || !date) {
                 alert('Please fill all fields correctly.');
                 return;
             }
+
+            let attachmentData = {};
+            if (attachmentFile) {
+                if (attachmentFile.size > MAX_FILE_SIZE) {
+                    alert(`File is too large. Maximum size is ${MAX_FILE_SIZE / 1024}KB.`);
+                    return;
+                }
+                try {
+                    const dataURI = await readFileAsDataURL(attachmentFile);
+                    attachmentData = {
+                        attachmentDataURI: dataURI,
+                        attachmentFileName: attachmentFile.name,
+                        attachmentFileType: attachmentFile.type
+                    };
+                } catch (error) {
+                    console.error("Error reading file:", error);
+                    alert("Could not read the attachment. Please try again.");
+                    return;
+                }
+            }
             
             const editingId = addExpenseForm.dataset.editingId;
-            if (editingId) { // Editing existing expense
+            if (editingId) { 
                 const expenseIndex = expenses.findIndex(exp => exp.id === editingId);
                 if (expenseIndex > -1) {
-                    expenses[expenseIndex] = { ...expenses[expenseIndex], description, amount, category, date };
+                    // Preserve existing attachment if no new one is selected
+                    const existingAttachment = expenses[expenseIndex].attachmentDataURI ? 
+                        { 
+                            attachmentDataURI: expenses[expenseIndex].attachmentDataURI,
+                            attachmentFileName: expenses[expenseIndex].attachmentFileName,
+                            attachmentFileType: expenses[expenseIndex].attachmentFileType
+                        } : {};
+                    
+                    expenses[expenseIndex] = { 
+                        ...expenses[expenseIndex], 
+                        description, 
+                        amount, 
+                        category, 
+                        date,
+                        ...(attachmentFile ? attachmentData : existingAttachment) // Use new if provided, else keep old
+                    };
+                     // If user explicitly wants to remove attachment during edit, we need a separate mechanism
                 }
-                delete addExpenseForm.dataset.editingId; // Clear editing state
+                delete addExpenseForm.dataset.editingId; 
                 addExpenseForm.querySelector('button[type="submit"]').textContent = 'Add Expense';
-            } else { // Adding new expense
-                const newExpense = { id: generateId(), description, amount, category, date };
+            } else { 
+                const newExpense = { 
+                    id: generateId(), 
+                    description, 
+                    amount, 
+                    category, 
+                    date, 
+                    ...attachmentData 
+                };
                 expenses.push(newExpense);
             }
 
             addExpenseForm.reset();
-            document.getElementById('expenseDate').valueAsDate = new Date(); // Reset date to today
-            renderExpenses(); // This calls updateSummary which saves
+            document.getElementById('expenseDate').valueAsDate = new Date(); 
+            expenseAttachmentInput.value = ''; 
+            attachmentFileInfo.textContent = ''; 
+            renderExpenses(); 
+        });
+        
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        expenseAttachmentInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`File is too large. Maximum size is ${MAX_FILE_SIZE / 1024}KB.`);
+                    this.value = ''; 
+                    attachmentFileInfo.textContent = '';
+                    return;
+                }
+                attachmentFileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)}KB)`;
+            } else {
+                attachmentFileInfo.textContent = '';
+            }
         });
 
         function handleEditExpense(id) {
@@ -323,7 +425,14 @@
                 document.getElementById('expenseAmount').value = expense.amount;
                 document.getElementById('expenseCategory').value = expense.category;
                 document.getElementById('expenseDate').value = expense.date;
-                addExpenseForm.dataset.editingId = id; // Mark that we are editing
+                
+                expenseAttachmentInput.value = ''; // Clear file input, user must re-select to change
+                attachmentFileInfo.textContent = expense.attachmentFileName 
+                    ? `Current: ${expense.attachmentFileName}` 
+                    : 'No attachment. Select file to add/change.';
+                // To allow removing, we'd need a "Remove Attachment" button or similar logic here
+                
+                addExpenseForm.dataset.editingId = id; 
                 addExpenseForm.querySelector('button[type="submit"]').textContent = 'Update Expense';
                 document.getElementById('expenseDescription').focus();
             }
@@ -332,13 +441,12 @@
         function handleDeleteExpense(id) {
             if (confirm('Are you sure you want to delete this expense?')) {
                 expenses = expenses.filter(expense => expense.id !== id);
-                renderExpenses(); // This calls updateSummary which saves
+                renderExpenses(); 
             }
         }
         
         categoryFilter.addEventListener('change', renderExpenses);
         monthFilter.addEventListener('input', renderExpenses);
-
 
         document.getElementById('resetAllBtn').addEventListener('click', function() {
             if (confirm(`Are you sure you want to reset all income and expenses for ${loggedInUser}? This action cannot be undone.`)) {
@@ -347,25 +455,21 @@
                 monthlyIncomeInput.value = '';
                 localStorage.removeItem(getIncomeKey(loggedInUser));
                 localStorage.removeItem(getExpensesArrayKey(loggedInUser));
-                renderExpenses(); // This calls updateSummary which saves the empty state
+                renderExpenses(); 
             }
         });
 
         document.getElementById('downloadCsvBtn').addEventListener('click', function() {
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Date,Description,Category,Amount\r\n";
+            csvContent += "Date,Description,Category,Amount,Attachment Filename\r\n"; 
 
-            const dataToExport = expenses.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); // Sort by date ascending for export
+            const dataToExport = expenses.slice().sort((a,b) => new Date(a.date) - new Date(b.date)); 
 
             dataToExport.forEach(expense => {
-                csvContent += `${expense.date},"${expense.description.replace(/"/g, '""')}",${expense.category},${expense.amount}\r\n`;
+                const attachmentName = expense.attachmentFileName || "";
+                csvContent += `${expense.date},"${expense.description.replace(/"/g, '""')}",${expense.category},${expense.amount},"${attachmentName}"\r\n`;
             });
             
-            // Add income as a summary line if needed, or handle separately
-            // For now, just expenses.
-            // csvContent += `\r\nMonthly Income,,,${monthlyIncome}\r\n`;
-
-
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -379,8 +483,8 @@
         function initializeDashboard() {
             if (!loggedInUser) return;
             loadUserData();
-            document.getElementById('expenseDate').valueAsDate = new Date(); // Set default date to today
-            renderExpenses(); // Initial render
+            document.getElementById('expenseDate').valueAsDate = new Date(); 
+            renderExpenses(); 
         }
 
         initializeDashboard();
