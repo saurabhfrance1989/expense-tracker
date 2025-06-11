@@ -58,13 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const username = registerForm.username.value;
+            const email = registerForm.email.value; // Added email
             const password = registerForm.password.value; // Consider adding confirm password
             let users = getUsers();
 
             if (users.find(u => u.username === username)) {
                 alert('Username already exists.');
+            } else if (users.find(u => u.email === email)) { // Check if email already exists
+                alert('Email already registered.');
             } else {
-                users.push({ username, password });
+                users.push({ username, email, password }); // Added email
                 saveUsers(users);
                 alert('Registration successful! Please login.');
                 // Optionally, log them in directly or switch to login view
