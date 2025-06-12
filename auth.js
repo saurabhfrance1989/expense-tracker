@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-    const resetPasswordForm = document.getElementById('resetPasswordForm');
+    // const resetPasswordForm = document.getElementById('resetPasswordForm'); // No longer in login.html
 
     const showRegisterLink = document.getElementById('showRegister');
     const showLoginLink = document.getElementById('showLogin');
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerContainer = document.getElementById('registerContainer');
     const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
 
-    let usernameToReset = null; // To store username after verification
+    // let usernameToReset = null; // No longer needed here, managed by sessionStorage for reset-password.html
 
 
     // Function to get users from localStorage
@@ -91,10 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(loginForm) loginForm.reset();
         if(registerForm) registerForm.reset();
         if(forgotPasswordForm) forgotPasswordForm.reset();
-        if(resetPasswordForm) resetPasswordForm.reset();
-        if(resetPasswordForm) resetPasswordForm.style.display = 'none'; // Hide reset part initially
+        // if(resetPasswordForm) resetPasswordForm.reset(); // No longer in login.html
+        // if(resetPasswordForm) resetPasswordForm.style.display = 'none'; // No longer in login.html
         if(forgotPasswordForm) forgotPasswordForm.style.display = 'block'; // Show verify part initially
-        usernameToReset = null;
+        // usernameToReset = null; // No longer needed here
     }
 
     if (showRegisterLink) {
@@ -135,53 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const user = users.find(u => u.username === username && u.email === email);
 
             if (user) {
-                usernameToReset = user.username; // Store username for password update
-                forgotPasswordForm.style.display = 'none';
-                if(resetPasswordForm) resetPasswordForm.style.display = 'block';
-                alert('User verified. Please enter your new password.');
+                sessionStorage.setItem('usernameForPasswordReset', user.username);
+                alert('User verified. You will now be redirected to set a new password.');
+                window.location.href = 'reset-password.html';
             } else {
                 alert('Username or email not found, or they do not match.');
-                usernameToReset = null;
+                sessionStorage.removeItem('usernameForPasswordReset');
             }
         });
     }
 
-    // Handle Forgot Password - Step 2: Reset Password
-    if (resetPasswordForm) {
-        resetPasswordForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!usernameToReset) {
-                alert('User not verified. Please verify your username and email first.');
-                return;
-            }
-
-            const newPassword = resetPasswordForm.newPassword.value;
-            const confirmNewPassword = resetPasswordForm.confirmNewPassword.value;
-
-            if (newPassword !== confirmNewPassword) {
-                alert('New passwords do not match.');
-                return;
-            }
-            if (newPassword.length < 1) { // Basic validation
-                alert('Password cannot be empty.');
-                return;
-            }
-
-            let users = getUsers();
-            const userIndex = users.findIndex(u => u.username === usernameToReset);
-
-            if (userIndex > -1) {
-                users[userIndex].password = newPassword;
-                saveUsers(users);
-                alert('Password successfully reset! Please login with your new password.');
-                usernameToReset = null;
-                showForm('login');
-            } else {
-                // Should not happen if usernameToReset is correctly set
-                alert('Error resetting password. User not found.');
-            }
-        });
-    }
+    // Handle Forgot Password - Step 2: Reset Password (This logic is now in reset-password.html)
+    // if (resetPasswordForm) { ... } // Removed
 
 
     // Redirect if already logged in
