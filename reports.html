@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Buddy - Reports</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Redirect to login if not authenticated
+        if (!localStorage.getItem('loggedInUser')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="index.html">Dashboard</a>
+        <a href="documentation.html">Resources</a>
+        <a href="reports.html">Reports</a>
+    </div>
+
+    <div class="page-content-wrapper">
+        <div class="container dashboard-container">
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1>Budget Buddy Reports</h1>
+                    <p>Welcome, <span id="usernameDisplay"></span>!</p>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </header>
+
+            <!-- Reports and Analytics Section -->
+            <section class="reports-section card">
+                <h2>Spending Analytics</h2>
+                <div class="report-controls">
+                    <button id="generateReportBtn" class="btn btn-primary">Generate/Refresh Reports</button>
+                </div>
+                <div class="report-content">
+                    <div class="report-group" id="weeklyReport">
+                        <h3>Weekly Spending</h3>
+                        <canvas id="weeklyChart" width="400" height="200"></canvas>
+                        <p id="weeklyReportFallback"><em>Click "Generate/Refresh Reports" to see data.</em></p>
+                    </div>
+                    <div class="report-group" id="monthlyReport">
+                        <h3>Monthly Spending</h3>
+                        <canvas id="monthlyChart" width="400" height="200"></canvas>
+                        <p id="monthlyReportFallback"><em>Click "Generate/Refresh Reports" to see data.</em></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) {
+            document.getElementById('usernameDisplay').textContent = loggedInUser;
+        } else {
+            window.location.href = 'login.html'; // Should be caught by head script, but good fallback
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('loggedInUser');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // --- Data Keys ---
+        const getExpensesArrayKey = (user) => `expensesArray_${user}`;
+
+        // --- Global State ---
+        let expenses = [];
+        let weeklyChartInstance = null;
+        let monthlyChartInstance = null;
+
+        // --- DOM Elements ---
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const weeklyReportContainer = document.getElementById('weeklyReport');
+        const monthlyReportContainer = document.getElementById('monthlyReport');
+        const weeklyChartCanvas = document.getElementById('weeklyChart');
+        const monthlyChartCanvas = document.getElementById('monthlyChart');
+        const weeklyReportFallback = document.getElementById('weeklyReportFallback');
+        const monthlyReportFallback = document.getElementById('monthlyReportFallback');
+
+        // --- Utility Functions ---
+        function formatCurrency(amount) {
+            return '₹' + amount.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            // Ensure date is parsed as local, not UTC, by appending time if not present
+            const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00');
+            return date.toLocaleDateString('en-CA'); // YYYY-MM-DD
+        }
+        
+        // Date helper: Get the start of the week (Monday) for a given date
+        function getWeekStartDate(date) {
+            const d = new Date(date);
+            d.setHours(0,0,0,0);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            return new Date(d.setDate(diff));
+        }
+
+        // Date helper: Get the end of the week (Sunday) for a given date
+        function getWeekEndDate(date) {
+            const d = new Date(date);
+            d.setHours(23,59,59,999);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
+            return new Date(d.setDate(diff));
+        }
+
+        // --- Data Persistence ---
+        function loadUserExpenses() {
+            if (!loggedInUser) return;
+            const storedExpenses = localStorage.getItem(getExpensesArrayKey(loggedInUser));
+            expenses = storedExpenses ? JSON.parse(storedExpenses) : [];
+        }
+
+        // --- Chart Colors ---
+        const chartColors = [
+            '#FFB74D', '#FF9800', '#FFA726', '#FB8C00', '#FFD54F', 
+            '#FF7043', '#F4511E', '#FF8A65', '#FF5722', '#FFCCBC',
+            '#AED581', '#8BC34A', '#689F38', '#DCEDC8', '#C5E1A5'
+        ];
+
+        function getRandomColors(numColors) {
+            const colors = [];
+            const availableColors = [...chartColors];
+            for (let i = 0; i < numColors; i++) {
+                if (availableColors.length === 0) { // Replenish if we run out
+                    availableColors.push(...chartColors);
+                }
+                const randomIndex = Math.floor(Math.random() * availableColors.length);
+                colors.push(availableColors.splice(randomIndex, 1)[0]);
+            }
+            return colors;
+        }
+
+
+        // --- Report Generation Logic ---
+        function generateWeeklyReport(expensesData) {
+            weeklyReportFallback.style.display = 'none';
+            if (weeklyChartInstance) {
+                weeklyChartInstance.destroy();
+            }
+
+            if (expensesData.length === 0) {
+                weeklyReportFallback.textContent = 'No expenses data available to generate weekly report.';
+                weeklyReportFallback.style.display = 'block';
+                weeklyChartCanvas.style.display = 'none';
+                return;
+            }
+
+            const today = new Date();
+            const currentWeekStart = getWeekStartDate(today);
+            const currentWeekEnd = getWeekEndDate(today);
+
+            const weeklyExpenses = expensesData.filter(expense => {
+                const expenseDate = new Date(expense.date.includes('T') ? expense.date : expense.date + 'T00:00:00');
+                return expenseDate >= currentWeekStart && expenseDate <= currentWeekEnd;
+            });
+
+            if (weeklyExpenses.length === 0) {
+                weeklyReportFallback.textContent = `No expenses recorded for the current week (${formatDate(currentWeekStart.toISOString().split('T')[0])} - ${formatDate(currentWeekEnd.toISOString().split('T')[0])}).`;
+                weeklyReportFallback.style.display = 'block';
+                weeklyChartCanvas.style.display = 'none';
+                return;
+            }
+            
+            weeklyChartCanvas.style.display = 'block';
+            const spendingByCategory = {};
+            weeklyExpenses.forEach(expense => {
+                const amount = parseFloat(expense.amount);
+                spendingByCategory[expense.category] = (spendingByCategory[expense.category] || 0) + amount;
+            });
+
+            const labels = Object.keys(spendingByCategory);
+            const data = Object.values(spendingByCategory);
+            
+            weeklyChartInstance = new Chart(weeklyChartCanvas, {
+                type: 'pie', // Or 'bar'
+                data: {
+                    labels: labels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+                    datasets: [{
+                        label: 'Weekly Spending by Category',
+                        data: data,
+                        backgroundColor: getRandomColors(labels.length),
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: `Weekly Spending: ${formatDate(currentWeekStart.toISOString().split('T')[0])} - ${formatDate(currentWeekEnd.toISOString().split('T')[0])}`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += formatCurrency(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateMonthlyReport(expensesData) {
+            monthlyReportFallback.style.display = 'none';
+            if (monthlyChartInstance) {
+                monthlyChartInstance.destroy();
+            }
+
+            if (expensesData.length === 0) {
+                monthlyReportFallback.textContent = 'No expenses data available to generate monthly report.';
+                monthlyReportFallback.style.display = 'block';
+                monthlyChartCanvas.style.display = 'none';
+                return;
+            }
+            
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            firstDayOfMonth.setHours(0,0,0,0);
+            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+            lastDayOfMonth.setHours(23,59,59,999);
+
+            const monthlyExpenses = expensesData.filter(expense => {
+                const expenseDate = new Date(expense.date.includes('T') ? expense.date : expense.date + 'T00:00:00');
+                return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth;
+            });
+
+            if (monthlyExpenses.length === 0) {
+                monthlyReportFallback.textContent = `No expenses recorded for ${today.toLocaleString('default', { month: 'long' })} ${currentYear}.`;
+                monthlyReportFallback.style.display = 'block';
+                monthlyChartCanvas.style.display = 'none';
+                return;
+            }
+
+            monthlyChartCanvas.style.display = 'block';
+            const spendingByCategory = {};
+            monthlyExpenses.forEach(expense => {
+                const amount = parseFloat(expense.amount);
+                spendingByCategory[expense.category] = (spendingByCategory[expense.category] || 0) + amount;
+            });
+
+            const labels = Object.keys(spendingByCategory);
+            const data = Object.values(spendingByCategory);
+
+            monthlyChartInstance = new Chart(monthlyChartCanvas, {
+                type: 'bar', // Or 'pie'
+                data: {
+                    labels: labels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+                    datasets: [{
+                        label: 'Monthly Spending by Category',
+                        data: data,
+                        backgroundColor: getRandomColors(labels.length),
+                        borderColor: chartColors, // Example, can be single color or array
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false, // Bar chart might not need legend if only one dataset
+                        },
+                        title: {
+                            display: true,
+                            text: `Monthly Spending: ${today.toLocaleString('default', { month: 'long' })} ${currentYear}`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatCurrency(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateAndDisplayReports() {
+            loadUserExpenses(); // Ensure fresh data
+            generateWeeklyReport(expenses);
+            generateMonthlyReport(expenses);
+        }
+
+        // --- Event Listener for Report Generation ---
+        generateReportBtn.addEventListener('click', generateAndDisplayReports);
+
+        // --- Initialization ---
+        function initializeReportsPage() {
+            if (!loggedInUser) return;
+            // Initial call to load data and display reports, or prompt user to click button
+            generateAndDisplayReports(); 
+        }
+
+        initializeReportsPage();
+    </script>
+</body>
+</html>

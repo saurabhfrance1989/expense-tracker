@@ -16,6 +16,7 @@
     <div class="navbar">
         <a href="index.html">Dashboard</a>
         <a href="documentation.html">Resources</a>
+        <a href="reports.html">Reports</a>
     </div>
 
     <div class="page-content-wrapper">
@@ -110,26 +111,6 @@
                 </form>
             </section>
 
-            <!-- Reports and Analytics Section -->
-            <section class="reports-section card">
-                <h2>Reports and Analytics</h2>
-                <div class="report-controls">
-                    <button id="generateReportBtn" class="btn btn-primary">Generate/Refresh Report</button>
-                </div>
-                <div class="report-content">
-                    <div class="report-group" id="weeklyReport">
-                        <h3>Weekly Spending</h3>
-                        <p><em>Click "Generate/Refresh Report" to see data.</em></p>
-                        {/* Weekly report content will be populated here */}
-                    </div>
-                    <div class="report-group" id="monthlyReport">
-                        <h3>Monthly Spending</h3>
-                        <p><em>Click "Generate/Refresh Report" to see data.</em></p>
-                        {/* Monthly report content will be populated here */}
-                    </div>
-                </div>
-            </section>
-
             <!-- Expenses List Section -->
             <section class="expenses-list-section">
                 <h2>Your Expenses</h2>
@@ -216,12 +197,6 @@
         const noRemindersMessage = document.getElementById('noRemindersMessage');
         const MAX_FILE_SIZE = 250 * 1024; // 250KB
         const REMINDER_WARNING_DAYS = 7;
-
-        // --- Report Elements ---
-        const generateReportBtn = document.getElementById('generateReportBtn');
-        const weeklyReportContainer = document.getElementById('weeklyReport');
-        const monthlyReportContainer = document.getElementById('monthlyReport');
-
 
         // --- Utility Functions ---
         function formatCurrency(amount) {
@@ -595,120 +570,6 @@
             link.click();
             document.body.removeChild(link);
         });
-
-        // --- Report Generation Logic ---
-
-        // Date helper: Get the start of the week (Monday) for a given date
-        function getWeekStartDate(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-            return new Date(d.setDate(diff));
-        }
-
-        // Date helper: Get the end of the week (Sunday) for a given date
-        function getWeekEndDate(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
-            return new Date(d.setDate(diff));
-        }
-        
-        function generateWeeklyReport(expensesData) {
-            weeklyReportContainer.innerHTML = '<h3>Weekly Spending</h3>';
-            if (expensesData.length === 0) {
-                weeklyReportContainer.innerHTML += '<p>No expenses to report for the current week.</p>';
-                return;
-            }
-
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const currentWeekStart = getWeekStartDate(today);
-            currentWeekStart.setHours(0,0,0,0);
-            const currentWeekEnd = getWeekEndDate(today);
-            currentWeekEnd.setHours(23,59,59,999);
-
-            const weeklyExpenses = expensesData.filter(expense => {
-                const expenseDate = new Date(expense.date + 'T00:00:00'); // Ensure local date
-                return expenseDate >= currentWeekStart && expenseDate <= currentWeekEnd;
-            });
-
-            if (weeklyExpenses.length === 0) {
-                weeklyReportContainer.innerHTML += `<p>No expenses recorded from ${formatDate(currentWeekStart.toISOString().split('T')[0])} to ${formatDate(currentWeekEnd.toISOString().split('T')[0])}.</p>`;
-                return;
-            }
-
-            let totalWeeklySpending = 0;
-            const spendingByCategory = {};
-
-            weeklyExpenses.forEach(expense => {
-                const amount = parseFloat(expense.amount);
-                totalWeeklySpending += amount;
-                spendingByCategory[expense.category] = (spendingByCategory[expense.category] || 0) + amount;
-            });
-
-            let reportHTML = `<p><strong>Total for current week (${formatDate(currentWeekStart.toISOString().split('T')[0])} - ${formatDate(currentWeekEnd.toISOString().split('T')[0])}): ${formatCurrency(totalWeeklySpending)}</strong></p>`;
-            reportHTML += '<ul>';
-            for (const category in spendingByCategory) {
-                reportHTML += `<li>${category.charAt(0).toUpperCase() + category.slice(1)}: ${formatCurrency(spendingByCategory[category])}</li>`;
-            }
-            reportHTML += '</ul>';
-            weeklyReportContainer.innerHTML += reportHTML;
-        }
-
-        function generateMonthlyReport(expensesData) {
-            monthlyReportContainer.innerHTML = '<h3>Monthly Spending</h3>';
-            if (expensesData.length === 0) {
-                monthlyReportContainer.innerHTML += '<p>No expenses to report for the current month.</p>';
-                return;
-            }
-            
-            const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-            const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0); // Day 0 of next month is last day of current
-            firstDayOfMonth.setHours(0,0,0,0);
-            lastDayOfMonth.setHours(23,59,59,999);
-
-
-            const monthlyExpenses = expensesData.filter(expense => {
-                const expenseDate = new Date(expense.date + 'T00:00:00'); // Ensure local date
-                return expenseDate >= firstDayOfMonth && expenseDate <= lastDayOfMonth;
-            });
-
-            if (monthlyExpenses.length === 0) {
-                monthlyReportContainer.innerHTML += `<p>No expenses recorded for ${today.toLocaleString('default', { month: 'long' })} ${currentYear}.</p>`;
-                return;
-            }
-
-            let totalMonthlySpending = 0;
-            const spendingByCategory = {};
-
-            monthlyExpenses.forEach(expense => {
-                const amount = parseFloat(expense.amount);
-                totalMonthlySpending += amount;
-                spendingByCategory[expense.category] = (spendingByCategory[expense.category] || 0) + amount;
-            });
-
-            let reportHTML = `<p><strong>Total for ${today.toLocaleString('default', { month: 'long' })} ${currentYear}: ${formatCurrency(totalMonthlySpending)}</strong></p>`;
-            reportHTML += '<ul>';
-            for (const category in spendingByCategory) {
-                reportHTML += `<li>${category.charAt(0).toUpperCase() + category.slice(1)}: ${formatCurrency(spendingByCategory[category])}</li>`;
-            }
-            reportHTML += '</ul>';
-            monthlyReportContainer.innerHTML += reportHTML;
-        }
-
-        function generateAndDisplayReports() {
-            // Use the global 'expenses' array which is already loaded
-            generateWeeklyReport(expenses);
-            generateMonthlyReport(expenses);
-        }
-
-        // --- Event Listener for Report Generation ---
-        generateReportBtn.addEventListener('click', generateAndDisplayReports);
-
 
         // --- Initialization ---
         function initializeDashboard() {
