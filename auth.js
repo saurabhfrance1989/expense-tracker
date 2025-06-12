@@ -1,27 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm'); // Assuming you'll add a register form
+    const registerForm = document.getElementById('registerForm');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+
     const showRegisterLink = document.getElementById('showRegister');
-    const showLoginLink = document.getElementById('showLogin'); // Assuming you'll add this link in your register section
+    const showLoginLink = document.getElementById('showLogin');
+    const showForgotPasswordLink = document.getElementById('showForgotPassword');
+    const backToLoginFromForgotLink = document.getElementById('backToLoginFromForgot');
 
-    const loginContainer = document.querySelector('.container'); // Assuming this is the login container
-    let registerContainer; // Will be defined if register form elements are added by user
+    const verifyUserBtn = document.getElementById('verifyUserBtn');
 
-    // Attempt to find a separate registration container if it exists
-    // This is a common pattern, but user might need to adjust HTML
-    const allContainers = document.querySelectorAll('.container');
-    if (allContainers.length > 1) {
-        // Heuristic: if there's more than one .container, the second one might be for registration
-        // Or, ideally, it would have a specific ID like 'registerContainer'
-        const potentialRegisterContainer = document.getElementById('registerContainer');
-        if (potentialRegisterContainer) {
-            registerContainer = potentialRegisterContainer;
-        } else {
-            // Fallback if no specific ID, this is less robust
-            // registerContainer = allContainers[1];
-            console.warn('Register container not explicitly found by ID "registerContainer". UI toggling might be incomplete.');
-        }
-    }
+    const loginContainer = document.querySelector('.container'); // Main login container
+    const registerContainer = document.getElementById('registerContainer');
+    const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
+
+    let usernameToReset = null; // To store username after verification
 
 
     // Function to get users from localStorage
@@ -83,31 +77,112 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Toggle between Login and Register views
+    // Toggle between Login, Register, and Forgot Password views
+    function showForm(formToShow) {
+        loginContainer.style.display = 'none';
+        if(registerContainer) registerContainer.style.display = 'none';
+        if(forgotPasswordContainer) forgotPasswordContainer.style.display = 'none';
+        
+        if (formToShow === 'login' && loginContainer) loginContainer.style.display = 'block';
+        if (formToShow === 'register' && registerContainer) registerContainer.style.display = 'block';
+        if (formToShow === 'forgotPassword' && forgotPasswordContainer) forgotPasswordContainer.style.display = 'block';
+        
+        // Reset forms when switching
+        if(loginForm) loginForm.reset();
+        if(registerForm) registerForm.reset();
+        if(forgotPasswordForm) forgotPasswordForm.reset();
+        if(resetPasswordForm) resetPasswordForm.reset();
+        if(resetPasswordForm) resetPasswordForm.style.display = 'none'; // Hide reset part initially
+        if(forgotPasswordForm) forgotPasswordForm.style.display = 'block'; // Show verify part initially
+        usernameToReset = null;
+    }
+
     if (showRegisterLink) {
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
-            if (loginContainer && registerContainer) {
-                loginContainer.style.display = 'none';
-                registerContainer.style.display = 'block';
+            showForm('register');
+        });
+    }
+
+    if (showLoginLink && registerContainer) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('login');
+        });
+    }
+
+    if (showForgotPasswordLink) {
+        showForgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('forgotPassword');
+        });
+    }
+    
+    if (backToLoginFromForgotLink) {
+        backToLoginFromForgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('login');
+        });
+    }
+
+
+    // Handle Forgot Password - Step 1: Verify User
+    if (verifyUserBtn && forgotPasswordForm) {
+        verifyUserBtn.addEventListener('click', () => {
+            const username = forgotPasswordForm.fpUsername.value;
+            const email = forgotPasswordForm.fpEmail.value;
+            const users = getUsers();
+            const user = users.find(u => u.username === username && u.email === email);
+
+            if (user) {
+                usernameToReset = user.username; // Store username for password update
+                forgotPasswordForm.style.display = 'none';
+                if(resetPasswordForm) resetPasswordForm.style.display = 'block';
+                alert('User verified. Please enter your new password.');
             } else {
-                // Fallback or alert if containers aren't set up as expected
-                // This might happen if the registration form HTML isn't present or identifiable
-                alert('Registration form not found. Please ensure login.html is set up correctly.');
-                console.error("Login or Register container not found. Ensure login.html has a login container and a register container (e.g., with class 'container' or IDs 'loginContainer', 'registerContainer') and that registerForm has ID 'registerForm'.");
+                alert('Username or email not found, or they do not match.');
+                usernameToReset = null;
             }
         });
     }
 
-    if (showLoginLink && registerContainer) { // Ensure registerContainer exists for this
-        showLoginLink.addEventListener('click', (e) => {
+    // Handle Forgot Password - Step 2: Reset Password
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (loginContainer && registerContainer) {
-                registerContainer.style.display = 'none';
-                loginContainer.style.display = 'block';
+            if (!usernameToReset) {
+                alert('User not verified. Please verify your username and email first.');
+                return;
+            }
+
+            const newPassword = resetPasswordForm.newPassword.value;
+            const confirmNewPassword = resetPasswordForm.confirmNewPassword.value;
+
+            if (newPassword !== confirmNewPassword) {
+                alert('New passwords do not match.');
+                return;
+            }
+            if (newPassword.length < 1) { // Basic validation
+                alert('Password cannot be empty.');
+                return;
+            }
+
+            let users = getUsers();
+            const userIndex = users.findIndex(u => u.username === usernameToReset);
+
+            if (userIndex > -1) {
+                users[userIndex].password = newPassword;
+                saveUsers(users);
+                alert('Password successfully reset! Please login with your new password.');
+                usernameToReset = null;
+                showForm('login');
+            } else {
+                // Should not happen if usernameToReset is correctly set
+                alert('Error resetting password. User not found.');
             }
         });
     }
+
 
     // Redirect if already logged in
     if (localStorage.getItem('loggedInUser') && window.location.pathname.includes('login.html')) {
