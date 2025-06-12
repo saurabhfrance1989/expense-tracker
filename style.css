@@ -368,6 +368,62 @@ input:focus, select:focus {
     margin-top: 1.25rem;
 }
 
+/* Reports and Analytics Section */
+.reports-section {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.reports-section h2 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.report-controls {
+    margin-bottom: 1rem;
+}
+
+.report-controls .btn {
+    width: auto; /* Allow button to size to content */
+}
+
+.report-content .report-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa; /* Light background for each report group */
+    border-radius: 4px;
+}
+
+.report-content h3 {
+    font-size: 1.1rem;
+    color: #FFB74D; /* Primary Orange for report titles */
+    margin-bottom: 0.75rem;
+}
+
+.report-content p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.report-content ul {
+    list-style: disc;
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.report-content ul li {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+.report-content .report-group p em { /* Style for the placeholder text */
+    color: #6c757d;
+}
+
 
 /* Medium devices (tablets, 768px and up) */
 @media (min-width: 768px) {
@@ -449,4 +505,52 @@ input:focus, select:focus {
         width: auto;
         margin-left: 1rem; /* Add some space before button */
     }
+}
+
+/* Reminders Section */
+.reminders-section {
+    background-color: #fff3e0; /* Light Orange Background for reminders */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    border-left: 5px solid #ffb74d; /* Orange accent border */
+}
+
+.reminders-section h2 {
+    color: #e65100; /* Darker Orange for reminder title */
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ffe0b2; /* Lighter orange border */
+}
+
+#remindersList {
+    list-style: none;
+    padding-left: 0;
+}
+
+#remindersList li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ffe0b2; /* Separator for items */
+    font-size: 0.9rem;
+}
+
+#remindersList li:last-child {
+    border-bottom: none;
+}
+
+.reminder-warning {
+    color: #ef6c00; /* Warning text color - strong orange */
+    font-weight: 500;
+}
+
+.reminder-overdue {
+    color: #c62828; /* Overdue text color - strong red */
+    font-weight: 600;
+}
+
+#noRemindersMessage {
+    color: #757575; /* Gray for no reminders message */
+    font-style: italic;
+    padding-top: 0.5rem;
 }
