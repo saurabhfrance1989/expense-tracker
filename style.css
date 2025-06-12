@@ -408,6 +408,21 @@ input:focus, select:focus {
     margin: 0 auto; /* Center if container is wider */
 }
 
+.report-group .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.report-group .report-header h3 {
+    margin-bottom: 0; /* Remove bottom margin as flex handles alignment */
+}
+
+.report-group .report-header .btn-sm {
+    margin-left: 0.5rem; /* Space between title and button */
+}
+
 .report-content h3 {
     font-size: 1.1rem;
     color: #FFB74D; /* Primary Orange for report titles */

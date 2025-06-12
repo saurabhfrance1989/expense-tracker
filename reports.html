@@ -38,12 +38,18 @@
                 </div>
                 <div class="report-content">
                     <div class="report-group" id="weeklyReport">
-                        <h3>Weekly Spending</h3>
+                        <div class="report-header">
+                            <h3>Weekly Spending</h3>
+                            <button id="downloadWeeklyPngBtn" class="btn btn-sm btn-info" style="display:none;">Download PNG</button>
+                        </div>
                         <canvas id="weeklyChart" width="400" height="200"></canvas>
                         <p id="weeklyReportFallback"><em>Click "Generate/Refresh Reports" to see data.</em></p>
                     </div>
                     <div class="report-group" id="monthlyReport">
-                        <h3>Monthly Spending</h3>
+                        <div class="report-header">
+                            <h3>Monthly Spending</h3>
+                            <button id="downloadMonthlyPngBtn" class="btn btn-sm btn-info" style="display:none;">Download PNG</button>
+                        </div>
                         <canvas id="monthlyChart" width="400" height="200"></canvas>
                         <p id="monthlyReportFallback"><em>Click "Generate/Refresh Reports" to see data.</em></p>
                     </div>
@@ -83,6 +89,8 @@
         const monthlyChartCanvas = document.getElementById('monthlyChart');
         const weeklyReportFallback = document.getElementById('weeklyReportFallback');
         const monthlyReportFallback = document.getElementById('monthlyReportFallback');
+        const downloadWeeklyPngBtn = document.getElementById('downloadWeeklyPngBtn');
+        const downloadMonthlyPngBtn = document.getElementById('downloadMonthlyPngBtn');
 
         // --- Utility Functions ---
         function formatCurrency(amount) {
@@ -172,10 +180,12 @@
                 weeklyReportFallback.textContent = `No expenses recorded for the current week (${formatDate(currentWeekStart.toISOString().split('T')[0])} - ${formatDate(currentWeekEnd.toISOString().split('T')[0])}).`;
                 weeklyReportFallback.style.display = 'block';
                 weeklyChartCanvas.style.display = 'none';
+                downloadWeeklyPngBtn.style.display = 'none';
                 return;
             }
             
             weeklyChartCanvas.style.display = 'block';
+            downloadWeeklyPngBtn.style.display = 'inline-block';
             const spendingByCategory = {};
             weeklyExpenses.forEach(expense => {
                 const amount = parseFloat(expense.amount);
@@ -257,10 +267,12 @@
                 monthlyReportFallback.textContent = `No expenses recorded for ${today.toLocaleString('default', { month: 'long' })} ${currentYear}.`;
                 monthlyReportFallback.style.display = 'block';
                 monthlyChartCanvas.style.display = 'none';
+                downloadMonthlyPngBtn.style.display = 'none';
                 return;
             }
 
             monthlyChartCanvas.style.display = 'block';
+            downloadMonthlyPngBtn.style.display = 'inline-block';
             const spendingByCategory = {};
             monthlyExpenses.forEach(expense => {
                 const amount = parseFloat(expense.amount);
@@ -330,6 +342,28 @@
 
         // --- Event Listener for Report Generation ---
         generateReportBtn.addEventListener('click', generateAndDisplayReports);
+
+        // --- PNG Download Logic ---
+        function downloadChartAsPNG(chartInstance, filename) {
+            if (!chartInstance) {
+                alert('Chart not available for download.');
+                return;
+            }
+            const imageLink = document.createElement('a');
+            imageLink.href = chartInstance.toBase64Image();
+            imageLink.download = filename;
+            document.body.appendChild(imageLink);
+            imageLink.click();
+            document.body.removeChild(imageLink);
+        }
+
+        downloadWeeklyPngBtn.addEventListener('click', () => {
+            downloadChartAsPNG(weeklyChartInstance, `weekly_spending_report_${loggedInUser}_${new Date().toISOString().split('T')[0]}.png`);
+        });
+
+        downloadMonthlyPngBtn.addEventListener('click', () => {
+            downloadChartAsPNG(monthlyChartInstance, `monthly_spending_report_${loggedInUser}_${new Date().toISOString().split('T')[0]}.png`);
+        });
 
         // --- Initialization ---
         function initializeReportsPage() {
